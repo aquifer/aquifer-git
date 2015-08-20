@@ -12,7 +12,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
   var AquiferGit  = function() {},
       Q           = require('q'),
       spawn       = require('child_process').spawn,
-      Git         = require('nodegit'),
+      git         = require('nodegit'),
       mktemp      = require('mktemp'),
       del         = require('del'),
       fs          = require('fs-extra'),
@@ -54,21 +54,19 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     var jsonPath  = path.join(Aquifer.projectDir, 'aquifer.json'),
         json      = jsonFile.readFileSync(jsonPath),
         srcPath   = path.join(Aquifer.projectDir, json.paths.builds, 'work'),
-        destPath  = null,
-        repo      = null,
-        runBuild  = function() {
-          return Q(new Promise(function (resolve, reject) {
-            spawn('aquifer', ['build'])
-              .on('close', function (code) {
-                if (code !== 0) {
-                  reject('Something went wrong with the build. Error code: ' + code);
-                }
-                resolve();
-              });
-          }));
-        };
+        destPath, repo;
 
-    runBuild()
+    // Build the site.
+    Q.Promise(function (resolve, reject, notify) {
+      console.log('building the site.');
+      spawn('aquifer', ['build'])
+        .on('close', function (code) {
+          if (code !== 0) {
+            reject('Something went wrong with the build. Error code: ' + code);
+          }
+          resolve();
+        });
+    })
       // Make temporary directory.
       .then(function () {
         console.log('creating temp directory.');
@@ -79,11 +77,11 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         console.log('cloning the repository.');
         destPath = res;
         console.log(destPath);
-        return Git.Clone.clone(AquiferGitConfig.repository, destPath, {
+        return git.Clone.clone(AquiferGitConfig.repository, destPath, {
           remoteCallbacks: {
             certificateCheck: function() { return 1; },
             credentials: function(url, userName) {
-              return Git.Cred.sshKeyFromAgent(userName);
+              return git.Cred.sshKeyFromAgent(userName);
             }
           }
         });
@@ -151,7 +149,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       // Commit changes.
       .then(function () {
         console.log('commit changes.');
-        var signature = Git.Signature['default'](repo);
+        var signature = git.Signature['default'](repo);
 
         return repo.createCommitOnHead(['.'], signature, signature, 'Automated deployment.');
       })
