@@ -155,6 +155,16 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         });
       })
 
+      // Copy over additional deployment files.
+      .then(function() {
+        Aquifer.console.log('Copying deployment files...', 'status');
+        options.deploymentFiles.forEach(function (link) {
+          var src   = path.join(Aquifer.projectDir, link.src),
+              dest  = path.join(destPath, link.dest);
+          fs.copySync(src, dest, {clobber: true});
+        });
+      })
+
       // Add all files to the index.
       .then(function() {
         Aquifer.console.log('Adding all files to the index...', 'status');
