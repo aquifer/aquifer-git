@@ -14,6 +14,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       git         = require('nodegit'),
       mktemp      = require('mktemp'),
       path        = require('path'),
+      fs          = require('fs-extra'),
       jsonFile    = require('jsonfile');
 
   /**
@@ -82,7 +83,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     }
 
     // Create the destination directory and initiate the promise chain.
-    mktemp.createDir('tmp/XXXXXXX')
+    mktemp.createDir('builds/aquifer-git-XXXXXXX')
 
       // Clone the repository.
       .then(function (destPath_) {
@@ -198,6 +199,12 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         });
 
         return remote.push(refs);
+      })
+
+      // Remove the destination path.
+      .then(function() {
+        Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
+        fs.removeSync(destPath);
       })
 
       // Success!
