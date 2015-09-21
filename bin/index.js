@@ -9,7 +9,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
   'use strict';
 
-  var AquiferGit  = function() {},
+  var AquiferGit  = function () {},
       _           = require('lodash'),
       git         = require('nodegit'),
       mktemp      = require('mktemp'),
@@ -61,7 +61,6 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
     var jsonPath        = path.join(Aquifer.projectDir, 'aquifer.json'),
         json            = jsonFile.readFileSync(jsonPath),
-        srcPath         = path.join(Aquifer.projectDir, json.paths.builds, 'work'),
         make            = path.join(Aquifer.projectDir, json.paths.make),
         requiredOptions = ['remote', 'branch', 'message'],
         optionsMissing  = false,
@@ -83,7 +82,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     }
 
     // Create the destination directory and initiate the promise chain.
-    mktemp.createDir('builds/aquifer-git-XXXXXXX')
+    mktemp.createDir('aquifer-git-XXXXXXX')
 
       // Clone the repository.
       .then(function (destPath_) {
@@ -93,7 +92,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
         var cloneOptions = {
           remoteCallbacks: {
-            certificateCheck: function() { return 1; },
+            certificateCheck: function () { return 1; },
             credentials: function(url, userName) {
               return git.Cred.sshKeyFromAgent(userName);
             }
@@ -103,31 +102,43 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         return git.Clone.clone(options.remote, destPath, cloneOptions);
       })
 
-      // Checkout the deployment branch.
+      // Prepare the repository for the build.
       .then(function (repo_) {
         repo = repo_;
-        return repo.checkoutBranch(options.branch)
-          .then(function () {
-            Aquifer.console.log('Checking out the ' + options.branch + ' branch...', 'status');
-            return;
-          })
-          .catch(function (err) {
-            console.log(err);
-            Aquifer.console.log('Creating the ' + options.branch + ' branch...', 'status');
 
-            // Get the current HEAD commit.
-            return repo.getHeadCommit()
+        return repo.getCurrentBranch()
+          .then(function (ref) {
+            var currentBranch = ref.toString();
+
+            if (currentBranch === 'refs/heads/' + options.branch) {
+              // Nothing to do since we are deploying to the current branch.
+              return;
+            }
+
+            // Checkout the deployment target branch.
+            return repo.getBranchCommit('origin/' + options.branch)
+              // Pass the commit along if the remote exists.
+              .then(function (commit) {
+                Aquifer.console.log('Checking out the ' + options.branch + ' branch...', 'status');
+
+                return commit;
+              })
+
+              // If no remote exists with the given name pass along the current HEAD commit.
+              .catch(function (err) {
+                Aquifer.console.log('Creating the ' + options.branch + ' branch...', 'status');
+
+                return repo.getHeadCommit();
+              })
+
+              // Create the local branch at the commit.
               .then(function(commit) {
-                // Create the new branch at the current HEAD.
                 return repo.createBranch(options.branch, commit);
               })
+
+              // Checkout the local branch.
               .then(function () {
-                // Checkout the newly created branch.
                 return repo.checkoutBranch(options.branch);
-              })
-              .catch(function (err) {
-                // Make sure we escelate this error up the chain.
-                throw err;
               });
           });
       })
@@ -144,7 +155,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         build = new Aquifer.api.build(destPath, buildOptions);
 
         return new Promise(function (resolve, reject) {
-          build.create(make, function (error) {
+          build.create(make, false, path.join(Aquifer.projectDir, Aquifer.project.config.paths.make), false, function (error) {
             if (error) {
               reject();
             }
@@ -156,7 +167,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       })
 
       // Copy over additional deployment files.
-      .then(function() {
+      .then(function () {
         Aquifer.console.log('Copying deployment files...', 'status');
         options.deploymentFiles.forEach(function (link) {
           var src   = path.join(Aquifer.projectDir, link.src),
@@ -166,21 +177,21 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       })
 
       // Add all files to the index.
-      .then(function() {
+      .then(function () {
         Aquifer.console.log('Adding all files to the index...', 'status');
         return repo.index();
       })
-      .then(function(index_) {
+      .then(function (index_) {
         index = index_;
         return index.removeAll();
       })
-      .then(function() {
+      .then(function () {
         index.write();
       })
-      .then(function() {
+      .then(function () {
         return index.addAll();
       })
-      .then(function() {
+      .then(function () {
         index.write();
       })
 
@@ -202,8 +213,8 @@ module.exports = function(Aquifer, AquiferGitConfig) {
             refs  = [ref + ':' + ref];
 
         remote.setCallbacks({
-          certificateCheck: function() { return 1; },
-          credentials: function(url, userName) {
+          certificateCheck: function () { return 1; },
+          credentials: function (url, userName) {
             return git.Cred.sshKeyFromAgent(userName);
           }
         });
@@ -212,7 +223,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       })
 
       // Remove the destination path.
-      .then(function() {
+      .then(function () {
         Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
         fs.removeSync(destPath);
       })
