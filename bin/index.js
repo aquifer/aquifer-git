@@ -62,9 +62,11 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     var jsonPath        = path.join(Aquifer.projectDir, 'aquifer.json'),
         json            = jsonFile.readFileSync(jsonPath),
         make            = path.join(Aquifer.projectDir, json.paths.make),
+        options         = {
+          deploymentFiles: []
+        },
         requiredOptions = ['remote', 'branch', 'message'],
         optionsMissing  = false,
-        options         = {},
         build, destPath, repo, index;
 
     // Parse options and make sure they all exist.
