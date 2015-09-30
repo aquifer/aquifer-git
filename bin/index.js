@@ -91,10 +91,12 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         destPath = destPath_;
 
         var cloneOptions = {
-          remoteCallbacks: {
-            certificateCheck: function () { return 1; },
-            credentials: function(url, userName) {
-              return git.Cred.sshKeyFromAgent(userName);
+          fetchOpts: {
+            callbacks: {
+              certificateCheck: function () { return 1; },
+              credentials: function(url, userName) {
+                return git.Cred.sshKeyFromAgent(userName);
+              }
             }
           }
         };
@@ -210,16 +212,17 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       })
       .then(function (remote) {
         var ref   = 'refs/heads/' + options.branch,
-            refs  = [ref + ':' + ref];
+            refs  = [ref + ':' + ref],
+            pushOptions = {
+              callbacks: {
+                certificateCheck: function () { return 1; },
+                credentials: function (url, userName) {
+                  return git.Cred.sshKeyFromAgent(userName);
+                }
+              }
+            };
 
-        remote.setCallbacks({
-          certificateCheck: function () { return 1; },
-          credentials: function (url, userName) {
-            return git.Cred.sshKeyFromAgent(userName);
-          }
-        });
-
-        return remote.push(refs);
+        return remote.push(refs, pushOptions);
       })
 
       // Remove the destination path.
