@@ -14,8 +14,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       git         = require('nodegit'),
       mktemp      = require('mktemp'),
       path        = require('path'),
-      fs          = require('fs-extra'),
-      jsonFile    = require('jsonfile');
+      fs          = require('fs-extra');
 
   /**
    * Informs Aquifer of what this deployment script does.
@@ -57,9 +56,8 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       return;
     }
 
-    var jsonPath        = path.join(Aquifer.projectDir, 'aquifer.json'),
-        json            = jsonFile.readFileSync(jsonPath),
-        make            = path.join(Aquifer.projectDir, json.paths.make),
+    var config          = require(path.join(Aquifer.projectDir, 'aquifer.json'))
+        make            = path.join(Aquifer.projectDir, config.paths.make),
         options         = {
           deploymentFiles: []
         },
