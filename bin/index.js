@@ -40,6 +40,11 @@ module.exports = function(Aquifer, AquiferGitConfig) {
             name: '-m, --message <message>',
             default: 'Deployment from source repository.',
             description: 'The message to use with the deployment commit.'
+          },
+          folder: {
+            name: '-f, --folder <folder_name>',
+            default: false,
+            description: 'Subfolder in remote repository that should hold the build.'
           }
         }
       }
@@ -156,7 +161,15 @@ module.exports = function(Aquifer, AquiferGitConfig) {
           delPatters: ['*', '!.git']
         };
 
-        build = new Aquifer.api.build(destPath, buildOptions);
+        // Calculate build path.
+        var buildPath = destPath;
+
+        // If a folder is specified, add it to the build path.
+        if (options.folder) {
+          buildPath = path.join(buildPath, options.folder);
+        }
+
+        build = new Aquifer.api.build(buildPath, buildOptions);
 
         return new Promise(function (resolve, reject) {
           build.create(make, false, path.join(Aquifer.projectDir, Aquifer.project.config.paths.make), false, function (error) {
