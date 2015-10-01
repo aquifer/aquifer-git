@@ -56,7 +56,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       return;
     }
 
-    var make            = path.join(Aquifer.projectDir, Aquifer.project.config.paths.make),
+    var make            = Aquifer.project.absolutePaths.make,
         options         = {
           deploymentFiles: []
         },
