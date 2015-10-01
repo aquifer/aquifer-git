@@ -19,9 +19,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
   /**
    * Informs Aquifer of what this deployment script does.
-   *
-   * @return object
-   * Details about this deployment script.
+   * @returns {object} details about this deployment script.
    */
   AquiferGit.commands = function () {
     return {
@@ -53,10 +51,10 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
   /**
    * Run when user runs commands within this extension.
-   *
-   * @param string command string representing the name of the command defined in AquiferGit.commands that should run.
-   * @param object commandOptions options passed from the command.
-   * @param function callback function that is called when there is an error message to send.
+   * @param {string} command string representing the name of the command defined in AquiferGit.commands that should run.
+   * @param {object} commandOptions options passed from the command.
+   * @param {function} callback function that is called when there is an error message to send.
+   * @returns {boolean|object} false if the deploy fails, git clone object if it succeeds.
    */
   AquiferGit.run = function (command, commandOptions, callback) {
     if (command !== 'deploy-git') {
@@ -78,14 +76,17 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     _.assign(options, AquiferGitConfig, commandOptions, function (lastValue, nextValue, name) {
       return nextValue ? nextValue : lastValue;
     });
+
+
     requiredOptions.forEach(function (name) {
       if (!options[name]) {
         callback('"' + name + '" option is missing. Cannot deploy.');
         optionsMissing = true;
       }
     });
+
     if (optionsMissing) {
-      return;
+      return false;
     }
 
     // Create the destination directory and initiate the promise chain.
@@ -169,6 +170,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
           buildPath = path.join(buildPath, options.folder);
         }
 
+        // Create instance of build object.
         build = new Aquifer.api.build(buildPath, buildOptions);
 
         return new Promise(function (resolve, reject) {
