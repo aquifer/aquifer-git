@@ -1,5 +1,5 @@
-#aquifer-git
-This extension enable Aquifer to deploy builds of an Aquifer project to a git repo. This makes it easy to deploy Drupal websites to Pantheon or Acquia using Aquifer.
+# aquifer-git
+This extension enable Aquifer to deploy builds of an Aquifer project to a git repository. This makes it easy to deploy Drupal websites to Pantheon, Aquia, or any repository host.
 
 ## Installation
 To install this extension, in your Aquifer project, run:
