@@ -17,6 +17,8 @@ There are a few flags and configuration options which allow you to specify the r
 * `-b --branch` - Branch within the remote that this command should deploy to.
 * `-m --message` - Message that will be applied to the deployment commit.
 * `-f --folder` - Folder within the remote repository in which the project should build. (For instance, this should be `docroot` when deploying to an Acquia repository).
+* `-n --name` - Name to use for the deployment commit signature. If name is specified, email is also required.
+* `-e --email` - Email to use for the deployment commit signature. If email is specified, name is also required.
 
 All of these options can be set within `aquifer.json` so you do not have to specify the flags/values every time you would like to run `deploy-git`. To learn more about setting these options, read the [Configuration](#configuration) section of this document.
 
@@ -36,7 +38,9 @@ _in your `aquifer.json` file:_
     "source": "aquifer-git",
     "remote": "user@agitrepositoryhost.com:repositoryname.git",
     "branch": "master",
-    "folder": "docroot"
+    "folder": "docroot",
+    "name": "Deploy Bot",
+    "email": "deploybot@aquifer.io"
   }
 }
 ...

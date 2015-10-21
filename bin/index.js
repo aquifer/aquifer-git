@@ -42,6 +42,16 @@ module.exports = function(Aquifer, AquiferGitConfig) {
             name: '-f, --folder <folder_name>',
             default: false,
             description: 'Subfolder in remote repository that should hold the build.'
+          },
+          name: {
+            name: '-n, --name <name>',
+            default: false,
+            description: 'Name to use for the deployment commit signature.'
+          },
+          email: {
+            name: '-e, --email <email>',
+            default: false,
+            description: 'Email to use for the deployment commit signature.'
           }
         }
       }
@@ -83,6 +93,12 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     });
 
     if (optionsMissing) {
+      return false;
+    }
+
+    // Validate custom signature options.
+    if (!options.name != !options.email) {
+      callback('Both name and email options are required for a custom commit signature.');
       return false;
     }
 
@@ -213,8 +229,18 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
       // Commit changes.
       .then(function () {
+        var signature;
+
         Aquifer.console.log('Commit changes...', 'status');
-        var signature = git.Signature['default'](repo);
+
+        if (options.name && options.email) {
+          // Use custom signature.
+          signature = git.Signature.now(options.name, options.email);
+        }
+        else {
+          // Use default signature.
+          signature = git.Signature['default'](repo);
+        }
 
         return repo.createCommitOnHead(['.'], signature, signature, options.message);
       })
