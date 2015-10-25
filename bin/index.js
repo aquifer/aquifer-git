@@ -96,8 +96,9 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       return false;
     }
 
-    // Validate custom signature options.
-    if (!options.name != !options.email) {
+    // If we have a name without an email, or an email with no name (like XOR),
+    // then we cannot create a custom signature and need to bail out.
+    if (!options.name !== !options.email) {
       callback('Both name and email options are required for a custom commit signature.');
       return false;
     }
