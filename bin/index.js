@@ -63,7 +63,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
    * @param {string} command string representing the name of the command defined in AquiferGit.commands that should run.
    * @param {object} commandOptions options passed from the command.
    * @param {function} callback function that is called when there is an error message to send.
-   * @returns {boolean|object} false if the deploy fails, git clone object if it succeeds.
+   * @returns {undefined} null.
    */
   AquiferGit.run = function (command, commandOptions, callback) {
     if (command !== 'deploy-git') {
@@ -84,7 +84,6 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       return nextValue ? nextValue : lastValue;
     });
 
-
     requiredOptions.forEach(function (name) {
       if (!options[name]) {
         callback('"' + name + '" option is missing. Cannot deploy.');
@@ -93,14 +92,14 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     });
 
     if (optionsMissing) {
-      return false;
+      return;
     }
 
     // If we have a name without an email, or an email with no name (like XOR),
     // then we cannot create a custom signature and need to bail out.
     if (!options.name !== !options.email) {
       callback('Both name and email options are required for a custom commit signature.');
-      return false;
+      return;
     }
 
     // Create the destination directory and initiate the promise chain.
