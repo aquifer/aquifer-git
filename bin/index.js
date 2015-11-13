@@ -189,7 +189,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         return new Promise(function (resolve, reject) {
           build.create(make, false, path.join(Aquifer.projectDir, Aquifer.project.config.paths.make), false, function (error) {
             if (error) {
-              reject();
+              reject(error);
             }
             else {
               resolve();
