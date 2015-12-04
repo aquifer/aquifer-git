@@ -73,7 +73,10 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
     var make            = Aquifer.project.absolutePaths.make,
         options         = {
-          deploymentFiles: []
+          deploymentFiles: [],
+          excludeLinks: ['sites/default/files'],
+          addLinks: [],
+          delPatterns: ['*', '!.git']
         },
         requiredOptions = ['remote', 'branch', 'message'],
         optionsMissing  = false,
@@ -172,7 +175,9 @@ module.exports = function(Aquifer, AquiferGitConfig) {
 
         var buildOptions = {
           symlink: false,
-          delPatters: ['*', '!.git']
+          delPatterns: options.delPatterns,
+          excludeLinks: options.excludeLinks,
+          addLinks: options.addLinks
         };
 
         // Calculate build path.
