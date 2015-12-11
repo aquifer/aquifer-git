@@ -30,6 +30,48 @@ aquifer deploy-git -r "user@agitrepositoryhost.com:repositoryname.git" -b "maste
 ## Configuration
 The options for `deploy-git` can be set in your project's `aquifer.json` file so you do not have to specify them every time you run `deploy-git`.
 
+### Available options
+
+#### remote
+
+The remote repository to deploy to.
+
+#### branch
+
+The branch on the remote repository to deploy to.
+
+#### folder
+
+A subfolder within the repository to build into.
+
+#### name
+
+The name to include in the commit signature.
+
+#### email
+
+The email to include in the commit signature.
+
+#### deploymentFiles
+
+_This is deprecated in favor of the [addLinks](#addlinks) option._
+
+An array of objects containing a `src` and `dest` property. These files will be copied from `src` to `dest` after the build and before deploying.
+
+#### excludeLinks
+
+An array of destination directories to exclude when copying linked project directories to build targets. The default is `["sites/default/files"]` to ensure the files directory (which is sometimes quite large) is excluded when building for deployment.
+
+#### addLinks
+
+An array of objects containing `src`, `dest`, and `type` properties. These files or directories will be copied from `src` to `dest` during the build.
+
+#### delPatterns
+
+An array of patterns indicating what should be deleted when clearing the cloned repository in preparation for the new build. The default is `["*", "!.git"]` which deletes everything except the `.git` directory.
+
+### Example configuration:
+
 _in your `aquifer.json` file:_
 ```json
 ...
@@ -40,7 +82,26 @@ _in your `aquifer.json` file:_
     "branch": "master",
     "folder": "docroot",
     "name": "Deploy Bot",
-    "email": "deploybot@aquifer.io"
+    "email": "deploybot@aquifer.io",
+    "deploymentFiles": [
+      {
+        "src": "deploy/.gitignore",
+        "dest": ".gitignore"
+      },
+      {
+        "src": "deploy/.htaccess",
+        "dest": ".htaccess"
+      }
+    ],
+    "excludeLinks": ["sites/default/files"],
+    "addlinks": [
+      {
+        "src": "path/to/dir/in/project",
+        "dest": "path/to/dir/in/build",
+        "type": "dir"
+      }
+    ],
+    "delPatterns": ["*", "!.git"]
   }
 }
 ...
