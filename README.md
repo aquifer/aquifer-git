@@ -106,3 +106,18 @@ _in your `aquifer.json` file:_
 }
 ...
 ```
+
+## Nodegit issues.
+On some versions of OSX, this node module will fail to install or run with the error:
+```
+Cannot find module './build/Debug/nodegit'
+```
+
+To resolve this, take the following steps after the extension has had a faulty installation or load.
+```
+brew install openssl
+brew link --force openssl
+cd .aquifer/node_modules/nodegit
+npm install
+```
+
