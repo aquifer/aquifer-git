@@ -8,6 +8,20 @@ To install aquifer-git, run the below command from within your Aquifer project:
 aquifer extension-add aquifer-git
 ```
 
+### Nodegit issues.
+On some versions of OSX, this node module will fail to install or run with the error:
+```
+Cannot find module './build/Debug/nodegit'
+```
+
+To resolve this, take the following steps after the extension has had a faulty installation or load.
+```
+brew install openssl
+brew link --force openssl
+cd .aquifer/node_modules/nodegit
+npm install
+```
+
 ## Use
 This extension adds a `deploy-git` command to your Aquifer project. When run, it will checkout a git repository, build the current project into the repository, commit the changes, and push to the origin.
 
