@@ -1,8 +1,9 @@
 env:
     node: true
+    es6: true
 
 rules:
-    indent: [2, 2, {VariableDeclarator: 2}]
+    indent: [2, 2, {"VariableDeclarator": 2, "SwitchCase": 1}]
     comma-style: [2, "last"]
     default-case: 2
     guard-for-in: 2
