@@ -1,6 +1,6 @@
 {
   "name": "aquifer-git",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Git deployment for Aquifer.",
   "main": "aquifer-git.js",
   "scripts": {
