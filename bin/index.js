@@ -71,8 +71,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       return;
     }
 
-    var make            = Aquifer.project.absolutePaths.make,
-        options         = {
+    var options         = {
           deploymentFiles: [],
           excludeLinks: ['sites/default/files'],
           addLinks: [],
@@ -189,18 +188,9 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         }
 
         // Create instance of build object.
-        build = new Aquifer.api.build(buildPath, buildOptions);
+        build = new Aquifer.api.build(Aquifer);
 
-        return new Promise(function (resolve, reject) {
-          build.create(make, false, path.join(Aquifer.projectDir, Aquifer.project.config.paths.make), false, function (error) {
-            if (error) {
-              reject(error);
-            }
-            else {
-              resolve();
-            }
-          });
-        });
+        return build.create(buildPath, buildOptions);
       })
 
       // Copy over additional deployment files.
