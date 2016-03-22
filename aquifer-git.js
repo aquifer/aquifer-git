@@ -49,7 +49,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
             description: 'Name to use for the deployment commit signature.'
           },
           email: {
-            name: '-m, --email <email>',
+            name: '-a, --email <email>',
             default: false,
             description: 'Email to use for the deployment commit signature.'
           }
