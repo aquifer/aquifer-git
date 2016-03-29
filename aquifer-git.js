@@ -5,22 +5,22 @@
 
 /* globals require, Aquifer, AquiferGitConfig, module */
 
-module.exports = function(Aquifer, AquiferGitConfig) {
+module.exports = (Aquifer, AquiferGitConfig) => {
 
   'use strict';
 
-  var AquiferGit  = function () {},
-      _           = require('lodash'),
-      git         = require('nodegit'),
-      mktemp      = require('mktemp'),
-      path        = require('path'),
-      fs          = require('fs-extra');
+  const AquiferGit = () => {};
+  const _ = require('lodash');
+  const git = require('nodegit');
+  const mktemp = require('mktemp');
+  const path = require('path');
+  const fs = require('fs-extra');
 
   /**
    * Informs Aquifer of what this deployment script does.
    * @returns {object} details about this deployment script.
    */
-  AquiferGit.commands = function () {
+  AquiferGit.commands = () => {
     return {
       'deploy-git': {
         description: 'Deploys the site to a remote Git repository.',
@@ -49,7 +49,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
             description: 'Name to use for the deployment commit signature.'
           },
           email: {
-            name: '-e, --email <email>',
+            name: '-a, --email <email>',
             default: false,
             description: 'Email to use for the deployment commit signature.'
           }
@@ -65,29 +65,31 @@ module.exports = function(Aquifer, AquiferGitConfig) {
    * @param {function} callback function that is called when there is an error message to send.
    * @returns {undefined} null.
    */
-  AquiferGit.run = function (command, commandOptions, callback) {
+  AquiferGit.run = (command, commandOptions, callback) => {
     if (command !== 'deploy-git') {
       callback('Invalid command.');
       return;
     }
 
-    var make            = Aquifer.project.absolutePaths.make,
-        options         = {
-          deploymentFiles: [],
-          excludeLinks: ['sites/default/files'],
-          addLinks: [],
-          delPatterns: ['*', '!.git']
-        },
-        requiredOptions = ['remote', 'branch', 'message'],
-        optionsMissing  = false,
-        build, destPath, repo, index;
+    let options = {
+      deploymentFiles: [],
+      excludeLinks: ['sites/default/files'],
+      addLinks: [],
+      delPatterns: ['*', '!.git']
+    };
+    let requiredOptions = ['remote', 'branch', 'message'];
+    let optionsMissing  = false;
+    let build;
+    let destPath;
+    let repo;
+    let index;
 
     // Parse options and make sure they all exist.
-    _.assign(options, AquiferGitConfig, commandOptions, function (lastValue, nextValue, name) {
+    _.assign(options, AquiferGitConfig, commandOptions, (lastValue, nextValue, name) => {
       return nextValue ? nextValue : lastValue;
     });
 
-    requiredOptions.forEach(function (name) {
+    requiredOptions.forEach((name) => {
       if (!options[name]) {
         callback('"' + name + '" option is missing. Cannot deploy.');
         optionsMissing = true;
@@ -109,16 +111,16 @@ module.exports = function(Aquifer, AquiferGitConfig) {
     mktemp.createDir('aquifer-git-XXXXXXX')
 
       // Clone the repository.
-      .then(function (destPath_) {
+      .then((destPath_) => {
         Aquifer.console.log('Cloning the repository into ' + destPath_ + '.', 'status');
 
         destPath = destPath_;
 
-        var cloneOptions = {
+        let cloneOptions = {
           fetchOpts: {
             callbacks: {
-              certificateCheck: function () { return 1; },
-              credentials: function(url, userName) {
+              certificateCheck: () => { return 1; },
+              credentials: (url, userName) => {
                 return git.Cred.sshKeyFromAgent(userName);
               }
             }
@@ -129,12 +131,12 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       })
 
       // Prepare the repository for the build.
-      .then(function (repo_) {
+      .then((repo_) => {
         repo = repo_;
 
         return repo.getCurrentBranch()
-          .then(function (ref) {
-            var currentBranch = ref.toString();
+          .then((ref) => {
+            let currentBranch = ref.toString();
 
             if (currentBranch === 'refs/heads/' + options.branch) {
               // Nothing to do since we are deploying to the current branch.
@@ -144,36 +146,36 @@ module.exports = function(Aquifer, AquiferGitConfig) {
             // Checkout the deployment target branch.
             return repo.getBranchCommit('origin/' + options.branch)
               // Pass the commit along if the remote exists.
-              .then(function (commit) {
+              .then((commit) => {
                 Aquifer.console.log('Checking out the ' + options.branch + ' branch...', 'status');
 
                 return commit;
               })
 
               // If no remote exists with the given name pass along the current HEAD commit.
-              .catch(function (err) {
+              .catch((err) => {
                 Aquifer.console.log('Creating the ' + options.branch + ' branch...', 'status');
 
                 return repo.getHeadCommit();
               })
 
               // Create the local branch at the commit.
-              .then(function(commit) {
+              .then((commit) => {
                 return repo.createBranch(options.branch, commit);
               })
 
               // Checkout the local branch.
-              .then(function () {
+              .then(() => {
                 return repo.checkoutBranch(options.branch);
               });
           });
       })
 
       // Build the site.
-      .then(function () {
+      .then(() => {
         Aquifer.console.log('Building the site...', 'status');
 
-        var buildOptions = {
+        let buildOptions = {
           symlink: false,
           delPatterns: options.delPatterns,
           excludeLinks: options.excludeLinks,
@@ -181,7 +183,7 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         };
 
         // Calculate build path.
-        var buildPath = destPath;
+        let buildPath = destPath;
 
         // If a folder is specified, add it to the build path.
         if (options.folder) {
@@ -189,52 +191,43 @@ module.exports = function(Aquifer, AquiferGitConfig) {
         }
 
         // Create instance of build object.
-        build = new Aquifer.api.build(buildPath, buildOptions);
+        build = new Aquifer.api.build(Aquifer);
 
-        return new Promise(function (resolve, reject) {
-          build.create(make, false, path.join(Aquifer.projectDir, Aquifer.project.config.paths.make), false, function (error) {
-            if (error) {
-              reject(error);
-            }
-            else {
-              resolve();
-            }
-          });
-        });
+        return build.create(buildPath, buildOptions);
       })
 
       // Copy over additional deployment files.
-      .then(function () {
+      .then(() => {
         Aquifer.console.log('Copying deployment files...', 'status');
         options.deploymentFiles.forEach(function (link) {
-          var src   = path.join(Aquifer.projectDir, link.src),
-              dest  = path.join(destPath, link.dest);
+          let src = path.join(Aquifer.projectDir, link.src);
+          let dest = path.join(destPath, link.dest);
           fs.copySync(src, dest, {clobber: true});
         });
       })
 
       // Add all files to the index.
-      .then(function () {
+      .then(() => {
         Aquifer.console.log('Adding all files to the index...', 'status');
         return repo.index();
       })
-      .then(function (index_) {
+      .then((index_) => {
         index = index_;
         return index.removeAll();
       })
-      .then(function () {
+      .then(() => {
         index.write();
       })
-      .then(function () {
+      .then(() => {
         return index.addAll();
       })
-      .then(function () {
+      .then(() => {
         index.write();
       })
 
       // Commit changes.
-      .then(function () {
-        var signature;
+      .then(() => {
+        let signature;
 
         Aquifer.console.log('Commit changes...', 'status');
 
@@ -251,38 +244,38 @@ module.exports = function(Aquifer, AquiferGitConfig) {
       })
 
       // Push changes.
-      .then(function () {
+      .then(() => {
         Aquifer.console.log('Pushing changes to origin/' + options.branch + '...', 'status');
         return repo.getRemote('origin');
       })
-      .then(function (remote) {
-        var ref   = 'refs/heads/' + options.branch,
-            refs  = [ref + ':' + ref],
-            pushOptions = {
-              callbacks: {
-                certificateCheck: function () { return 1; },
-                credentials: function (url, userName) {
-                  return git.Cred.sshKeyFromAgent(userName);
-                }
-              }
-            };
+      .then((remote) => {
+        let ref   = 'refs/heads/' + options.branch;
+        let refs  = [ref + ':' + ref];
+        let pushOptions = {
+          callbacks: {
+            certificateCheck: () => { return 1; },
+            credentials: (url, userName) => {
+              return git.Cred.sshKeyFromAgent(userName);
+            }
+          }
+        };
 
         return remote.push(refs, pushOptions);
       })
 
       // Remove the destination path.
-      .then(function () {
+      .then(() => {
         Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
         fs.removeSync(destPath);
       })
 
       // Success!
-      .then(function () {
+      .then(() => {
         Aquifer.console.log('The site has been successfully deployed!', 'success');
       })
 
       // Catch any errors.
-      .catch(function (err) {
+      .catch((err) => {
         callback(err);
       });
   };
