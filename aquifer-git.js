@@ -202,6 +202,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
         options.deploymentFiles.forEach(function (link) {
           let src = path.join(Aquifer.projectDir, link.src);
           let dest = path.join(destPath, link.dest);
+          fs.removeSync(dest);
           fs.copySync(src, dest, {clobber: true});
         });
       })
