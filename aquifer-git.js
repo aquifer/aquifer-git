@@ -115,7 +115,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
       return run.invoke('git clone ' + options.remote + ' ' + destPath);
     })
 
-    // Prepare the repository for the build.
+    // Checkout or create the specified branch.
     .then(() => {
       return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' checkout ' + options.branch)
         .then(() => {
@@ -162,7 +162,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
       });
     })
 
-    // Add all files to the index.
+    // Clear the current index.
     .then(() => {
       Aquifer.console.log('Clearing the index...', 'status');
       console.log(path.join(Aquifer.projectDir, destPath));
