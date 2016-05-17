@@ -171,7 +171,15 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     // Commit changes.
     .then(() => {
       Aquifer.console.log('Committing changes...', 'status');
-      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '"');
+
+      // Add author info to commit if we have it in config options.
+      if (options.name !== 'undefined') {
+        options.email = options.email || '';
+        return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '" --author "' + options.name + '<' + options.email + '>"');
+      }
+      else {
+        return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '"');
+      }
     })
 
     // Push to origin.
