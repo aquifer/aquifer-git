@@ -8,6 +8,8 @@ To install aquifer-git, run the below command from within your Aquifer project:
 aquifer extension-add aquifer-git
 ```
 
+This extension also requires that you have [Git](https://git-scm.com) installed on your development environment and are able to access and push to the remote repository you are deploying to.
+
 ## Use
 This extension adds a `deploy-git` command to your Aquifer project. When run, it will checkout a git repository, build the current project into the repository, commit the changes, and push to the origin.
 
