@@ -100,6 +100,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
     // Create the destination directory and initiate the promise chain.
     mktemp.createDir('aquifer-git-XXXXXXX')
+
     // Clone the repository.
     .then((destPath_) => {
       Aquifer.console.log('Cloning the repository into ' + destPath_ + '...', 'status');
@@ -110,7 +111,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     // Prepare the repository for the build.
     .then(() => {
       Aquifer.console.log('Checking out branch: ' + options.branch + '...', 'status');
-      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git checkout ' + options.branch + '"');
+      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' checkout ' + options.branch);
     })
 
     // Build the site.
@@ -158,19 +159,19 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     // Add all files to the index.
     .then(() => {
       Aquifer.console.log('Adding all files to the index...', 'status');
-      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git add -A"');
+      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' add -A');
     })
 
     // Commit changes.
     .then(() => {
       Aquifer.console.log('Committing changes...', 'status');
-      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git commit -m \'' + options.message + '\'"');
+      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '"');
     })
 
     // Push to origin.
     .then(() => {
       Aquifer.console.log('Pushing branch: ' + options.branch + '...', 'status');
-      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git push origin ' + options.branch + '"');
+      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' push origin ' + options.branch);
     })
 
     // Remove the destination path.
