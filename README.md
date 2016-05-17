@@ -96,7 +96,7 @@ _in your `aquifer.json` file:_
       }
     ],
     "excludeLinks": ["sites/default/files"],
-    "addlinks": [
+    "addLinks": [
       {
         "src": "path/to/dir/in/project",
         "dest": "path/to/dir/in/build",
