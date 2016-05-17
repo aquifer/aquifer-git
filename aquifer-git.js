@@ -98,6 +98,13 @@ module.exports = (Aquifer, AquiferGitConfig) => {
       return;
     }
 
+    // If we have an email without a name, then we cannot create a custom
+    // signature and need to bail out.
+    if (options.email && !options.name) {
+      callback('Name is required for a custom commit signature if the email is provided.');
+      return;
+    }
+
     // Create the destination directory and initiate the promise chain.
     mktemp.createDir('aquifer-git-XXXXXXX')
 
@@ -172,14 +179,15 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     .then(() => {
       Aquifer.console.log('Committing changes...', 'status');
 
+      let command = 'git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '"';
+
       // Add author info to commit if we have it in config options.
       if (options.name) {
         options.email = options.email || '';
-        return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '" --author "' + options.name + '<' + options.email + '>"');
+        command += ' --author "' + options.name + '<' + options.email + '>"';
       }
-      else {
-        return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '"');
-      }
+
+      return run.invoke(command);
     })
 
     // Push to origin.
@@ -201,6 +209,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
     // Catch any errors.
     .catch((err) => {
+      fs.removeSync(destPath);
       callback(err);
     });
   };
