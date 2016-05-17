@@ -173,7 +173,7 @@ module.exports = (Aquifer, AquiferGitConfig) => {
       Aquifer.console.log('Committing changes...', 'status');
 
       // Add author info to commit if we have it in config options.
-      if (options.name !== 'undefined') {
+      if (options.name) {
         options.email = options.email || '';
         return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' commit -m "' + options.message + '" --author "' + options.name + '<' + options.email + '>"');
       }
