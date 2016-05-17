@@ -85,14 +85,14 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     // Parse options and make sure they all exist.
     _.assign(options, AquiferGitConfig, commandOptions, (lastValue, nextValue, name) => {
       return nextValue ? nextValue : lastValue;
-  });
+    });
 
     requiredOptions.forEach((name) => {
       if (!options[name]) {
-      callback('"' + name + '" option is missing. Cannot deploy.');
-      optionsMissing = true;
-    }
-  });
+        callback('"' + name + '" option is missing. Cannot deploy.');
+        optionsMissing = true;
+      }
+    });
 
     if (optionsMissing) {
       return;
@@ -100,94 +100,94 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
     // Create the destination directory and initiate the promise chain.
     mktemp.createDir('aquifer-git-XXXXXXX')
-      // Clone the repository.
-      .then((destPath_) => {
+    // Clone the repository.
+    .then((destPath_) => {
       Aquifer.console.log('Cloning the repository into ' + destPath_ + '...', 'status');
-    destPath = destPath_;
-    return run.invoke('git clone ' + options.remote + ' ' + destPath);
-  })
+      destPath = destPath_;
+      return run.invoke('git clone ' + options.remote + ' ' + destPath);
+    })
 
     // Prepare the repository for the build.
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('Checking out branch: ' + options.branch + '...', 'status');
-    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git checkout ' + options.branch + '"');
-  })
+      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git checkout ' + options.branch + '"');
+    })
 
     // Build the site.
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('Building the site...', 'status');
 
-    let buildOptions = {
-      symlink: false,
-      delPatterns: options.delPatterns,
-      excludeLinks: options.excludeLinks,
-      addLinks: options.addLinks
-    };
+      let buildOptions = {
+        symlink: false,
+        delPatterns: options.delPatterns,
+        excludeLinks: options.excludeLinks,
+        addLinks: options.addLinks
+      };
 
-    // Calculate build path.
-    let buildPath = destPath;
+      // Calculate build path.
+      let buildPath = destPath;
 
-    // If a folder is specified, add it to the build path.
-    if (options.folder) {
-      buildPath = path.join(buildPath, options.folder);
-    }
+      // If a folder is specified, add it to the build path.
+      if (options.folder) {
+        buildPath = path.join(buildPath, options.folder);
+      }
 
-    // Create instance of build object.
-    build = new Aquifer.api.build(Aquifer);
-    return build.create(buildPath, buildOptions);
-  })
+      // Create instance of build object.
+      build = new Aquifer.api.build(Aquifer);
+      return build.create(buildPath, buildOptions);
+    })
 
     // Copy over additional deployment files.
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('Copying deployment files...', 'status');
-    options.deploymentFiles.forEach(function (link) {
-      let src = path.join(Aquifer.projectDir, link.src);
-      let dest = path.join(destPath, link.dest);
-      fs.removeSync(dest);
-      fs.copySync(src, dest, {clobber: true});
-    });
-  })
+      options.deploymentFiles.forEach(function (link) {
+        let src = path.join(Aquifer.projectDir, link.src);
+        let dest = path.join(destPath, link.dest);
+        fs.removeSync(dest);
+        fs.copySync(src, dest, {clobber: true});
+      });
+    })
 
     // Add all files to the index.
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('Clearing the index...', 'status');
-    console.log(path.join(Aquifer.projectDir, destPath));
-    fs.removeSync(path.join(Aquifer.projectDir, destPath, '.git/index'));
-  })
+      console.log(path.join(Aquifer.projectDir, destPath));
+      fs.removeSync(path.join(Aquifer.projectDir, destPath, '.git/index'));
+    })
 
     // Add all files to the index.
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('Adding all files to the index...', 'status');
-    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git add -A"');
-  })
+      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git add -A"');
+    })
 
-  .then(() => {
-      console.log('1');
-    Aquifer.console.log('Committing changes...', 'status');
-    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git commit -m \'' + options.message + '\'"');
-  })
+    // Commit changes.
+    .then(() => {
+      Aquifer.console.log('Committing changes...', 'status');
+      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git commit -m \'' + options.message + '\'"');
+    })
 
-  .then(() => {
-      console.log('2');
-    Aquifer.console.log('Pushing branch: ' + options.branch + '...', 'status');
-    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git push origin ' + options.branch + '"');
-  })
+    // Push to origin.
+    .then(() => {
+      Aquifer.console.log('Pushing branch: ' + options.branch + '...', 'status');
+      return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git push origin ' + options.branch + '"');
+    })
 
     // Remove the destination path.
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
-    fs.removeSync(destPath);
-  })
+      fs.removeSync(destPath);
+    })
 
     // Success!
-  .then(() => {
+    .then(() => {
       Aquifer.console.log('The site has been successfully deployed!', 'success');
-  })
+    })
 
     // Catch any errors.
-  .catch((err) => {
+    .catch((err) => {
       callback(err);
-  });
+    });
   };
 
   return AquiferGit;
