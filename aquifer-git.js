@@ -11,7 +11,6 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
   const AquiferGit = () => {};
   const _ = require('lodash');
-  const git = require('nodegit');
   const mktemp = require('mktemp');
   const path = require('path');
   const fs = require('fs-extra');
@@ -81,204 +80,114 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     let optionsMissing  = false;
     let build;
     let destPath;
-    let repo;
-    let index;
+    let run = new Aquifer.api.run(Aquifer);
 
     // Parse options and make sure they all exist.
     _.assign(options, AquiferGitConfig, commandOptions, (lastValue, nextValue, name) => {
       return nextValue ? nextValue : lastValue;
-    });
+  });
 
     requiredOptions.forEach((name) => {
       if (!options[name]) {
-        callback('"' + name + '" option is missing. Cannot deploy.');
-        optionsMissing = true;
-      }
-    });
+      callback('"' + name + '" option is missing. Cannot deploy.');
+      optionsMissing = true;
+    }
+  });
 
     if (optionsMissing) {
       return;
     }
 
-    // If we have a name without an email, or an email with no name (like XOR),
-    // then we cannot create a custom signature and need to bail out.
-    if (!options.name !== !options.email) {
-      callback('Both name and email options are required for a custom commit signature.');
-      return;
-    }
-
     // Create the destination directory and initiate the promise chain.
     mktemp.createDir('aquifer-git-XXXXXXX')
-
       // Clone the repository.
       .then((destPath_) => {
-        Aquifer.console.log('Cloning the repository into ' + destPath_ + '.', 'status');
+      Aquifer.console.log('Cloning the repository into ' + destPath_ + '...', 'status');
+    destPath = destPath_;
+    return run.invoke('git clone ' + options.remote + ' ' + destPath);
+  })
 
-        destPath = destPath_;
+    // Prepare the repository for the build.
+  .then(() => {
+      Aquifer.console.log('Checking out branch: ' + options.branch + '...', 'status');
+    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git checkout ' + options.branch + '"');
+  })
 
-        let cloneOptions = {
-          fetchOpts: {
-            callbacks: {
-              certificateCheck: () => { return 1; },
-              credentials: (url, userName) => {
-                return git.Cred.sshKeyFromAgent(userName);
-              }
-            }
-          }
-        };
+    // Build the site.
+  .then(() => {
+      Aquifer.console.log('Building the site...', 'status');
 
-        return git.Clone.clone(options.remote, destPath, cloneOptions);
-      })
+    let buildOptions = {
+      symlink: false,
+      delPatterns: options.delPatterns,
+      excludeLinks: options.excludeLinks,
+      addLinks: options.addLinks
+    };
 
-      // Prepare the repository for the build.
-      .then((repo_) => {
-        repo = repo_;
+    // Calculate build path.
+    let buildPath = destPath;
 
-        return repo.getCurrentBranch()
-          .then((ref) => {
-            let currentBranch = ref.toString();
+    // If a folder is specified, add it to the build path.
+    if (options.folder) {
+      buildPath = path.join(buildPath, options.folder);
+    }
 
-            if (currentBranch === 'refs/heads/' + options.branch) {
-              // Nothing to do since we are deploying to the current branch.
-              return;
-            }
+    // Create instance of build object.
+    build = new Aquifer.api.build(Aquifer);
+    return build.create(buildPath, buildOptions);
+  })
 
-            // Checkout the deployment target branch.
-            return repo.getBranchCommit('origin/' + options.branch)
-              // Pass the commit along if the remote exists.
-              .then((commit) => {
-                Aquifer.console.log('Checking out the ' + options.branch + ' branch...', 'status');
+    // Copy over additional deployment files.
+  .then(() => {
+      Aquifer.console.log('Copying deployment files...', 'status');
+    options.deploymentFiles.forEach(function (link) {
+      let src = path.join(Aquifer.projectDir, link.src);
+      let dest = path.join(destPath, link.dest);
+      fs.removeSync(dest);
+      fs.copySync(src, dest, {clobber: true});
+    });
+  })
 
-                return commit;
-              })
+    // Add all files to the index.
+  .then(() => {
+      Aquifer.console.log('Clearing the index...', 'status');
+    console.log(path.join(Aquifer.projectDir, destPath));
+    fs.removeSync(path.join(Aquifer.projectDir, destPath, '.git/index'));
+  })
 
-              // If no remote exists with the given name pass along the current HEAD commit.
-              .catch((err) => {
-                Aquifer.console.log('Creating the ' + options.branch + ' branch...', 'status');
+    // Add all files to the index.
+  .then(() => {
+      Aquifer.console.log('Adding all files to the index...', 'status');
+    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git add -A"');
+  })
 
-                return repo.getHeadCommit();
-              })
+  .then(() => {
+      console.log('1');
+    Aquifer.console.log('Committing changes...', 'status');
+    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git commit -m \'' + options.message + '\'"');
+  })
 
-              // Create the local branch at the commit.
-              .then((commit) => {
-                return repo.createBranch(options.branch, commit);
-              })
+  .then(() => {
+      console.log('2');
+    Aquifer.console.log('Pushing branch: ' + options.branch + '...', 'status');
+    return run.invoke('bash -c "cd ' + path.join(Aquifer.projectDir, destPath) + ' && git push origin ' + options.branch + '"');
+  })
 
-              // Checkout the local branch.
-              .then(() => {
-                return repo.checkoutBranch(options.branch);
-              });
-          });
-      })
+    // Remove the destination path.
+  .then(() => {
+      Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
+    fs.removeSync(destPath);
+  })
 
-      // Build the site.
-      .then(() => {
-        Aquifer.console.log('Building the site...', 'status');
+    // Success!
+  .then(() => {
+      Aquifer.console.log('The site has been successfully deployed!', 'success');
+  })
 
-        let buildOptions = {
-          symlink: false,
-          delPatterns: options.delPatterns,
-          excludeLinks: options.excludeLinks,
-          addLinks: options.addLinks
-        };
-
-        // Calculate build path.
-        let buildPath = destPath;
-
-        // If a folder is specified, add it to the build path.
-        if (options.folder) {
-          buildPath = path.join(buildPath, options.folder);
-        }
-
-        // Create instance of build object.
-        build = new Aquifer.api.build(Aquifer);
-
-        return build.create(buildPath, buildOptions);
-      })
-
-      // Copy over additional deployment files.
-      .then(() => {
-        Aquifer.console.log('Copying deployment files...', 'status');
-        options.deploymentFiles.forEach(function (link) {
-          let src = path.join(Aquifer.projectDir, link.src);
-          let dest = path.join(destPath, link.dest);
-          fs.removeSync(dest);
-          fs.copySync(src, dest, {clobber: true});
-        });
-      })
-
-      // Add all files to the index.
-      .then(() => {
-        Aquifer.console.log('Adding all files to the index...', 'status');
-        return repo.index();
-      })
-      .then((index_) => {
-        index = index_;
-        return index.removeAll();
-      })
-      .then(() => {
-        index.write();
-      })
-      .then(() => {
-        return index.addAll();
-      })
-      .then(() => {
-        index.write();
-      })
-
-      // Commit changes.
-      .then(() => {
-        let signature;
-
-        Aquifer.console.log('Commit changes...', 'status');
-
-        if (options.name && options.email) {
-          // Use custom signature.
-          signature = git.Signature.now(options.name, options.email);
-        }
-        else {
-          // Use default signature.
-          signature = git.Signature['default'](repo);
-        }
-
-        return repo.createCommitOnHead(['.'], signature, signature, options.message);
-      })
-
-      // Push changes.
-      .then(() => {
-        Aquifer.console.log('Pushing changes to origin/' + options.branch + '...', 'status');
-        return repo.getRemote('origin');
-      })
-      .then((remote) => {
-        let ref   = 'refs/heads/' + options.branch;
-        let refs  = [ref + ':' + ref];
-        let pushOptions = {
-          callbacks: {
-            certificateCheck: () => { return 1; },
-            credentials: (url, userName) => {
-              return git.Cred.sshKeyFromAgent(userName);
-            }
-          }
-        };
-
-        return remote.push(refs, pushOptions);
-      })
-
-      // Remove the destination path.
-      .then(() => {
-        Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
-        fs.removeSync(destPath);
-      })
-
-      // Success!
-      .then(() => {
-        Aquifer.console.log('The site has been successfully deployed!', 'success');
-      })
-
-      // Catch any errors.
-      .catch((err) => {
-        callback(err);
-      });
+    // Catch any errors.
+  .catch((err) => {
+      callback(err);
+  });
   };
 
   return AquiferGit;
