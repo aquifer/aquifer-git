@@ -110,8 +110,14 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
     // Prepare the repository for the build.
     .then(() => {
-      Aquifer.console.log('Checking out branch: ' + options.branch + '...', 'status');
-      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' checkout ' + options.branch);
+      return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' checkout ' + options.branch)
+        .then(() => {
+          Aquifer.console.log('Checking out branch: ' + options.branch + '...', 'status');
+        })
+        .catch(() => {
+          Aquifer.console.log('Creating new branch: ' + options.branch + '...', 'status');
+          return run.invoke('git -C ' + path.join(Aquifer.projectDir, destPath) + ' checkout -b ' + options.branch);
+        });
     })
 
     // Build the site.
