@@ -165,7 +165,6 @@ module.exports = (Aquifer, AquiferGitConfig) => {
     // Clear the current index.
     .then(() => {
       Aquifer.console.log('Clearing the index...', 'status');
-      console.log(path.join(Aquifer.projectDir, destPath));
       fs.removeSync(path.join(Aquifer.projectDir, destPath, '.git/index'));
     })
 
