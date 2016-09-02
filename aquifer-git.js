@@ -51,6 +51,11 @@ module.exports = (Aquifer, AquiferGitConfig) => {
             name: '-a, --email <email>',
             default: false,
             description: 'Email to use for the deployment commit signature.'
+          },
+          debug: {
+            name: '-d, --debug',
+            default: false,
+            description: 'Don\'t delete the temporary aquifer-git-* directory.'
           }
         }
       }
@@ -197,8 +202,10 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
     // Remove the destination path.
     .then(() => {
-      Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
-      fs.removeSync(destPath);
+      if (!options.debug) {
+        Aquifer.console.log('Removing the ' + destPath + ' directory...', 'status');
+        fs.removeSync(destPath);
+      }
     })
 
     // Success!
@@ -208,7 +215,9 @@ module.exports = (Aquifer, AquiferGitConfig) => {
 
     // Catch any errors.
     .catch((err) => {
-      fs.removeSync(destPath);
+      if (!options.debug) {
+        fs.removeSync(destPath);
+      }
       callback(err);
     });
   };
