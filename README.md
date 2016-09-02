@@ -24,6 +24,10 @@ There are a few flags and configuration options which allow you to specify the r
 
 All of these options can be set within `aquifer.json` so you do not have to specify the flags/values every time you would like to run `deploy-git`. To learn more about setting these options, read the [Configuration](#configuration) section of this document.
 
+#### SSH Key Authentication
+
+If your git repository is using SSH keys for authentication, make sure that your ssh key has been added to the ssh-agent. [See github's documentation for more information](https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#adding-your-ssh-key-to-the-ssh-agent).
+
 ### Example useage
 ```bash
 aquifer deploy-git -r "user@agitrepositoryhost.com:repositoryname.git" -b "master" -m "Version 2.0" -f "docroot"
