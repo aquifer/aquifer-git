@@ -84,30 +84,32 @@ _in your `aquifer.json` file:_
 "extensions": {
   "aquifer-git": {
     "source": "aquifer-git",
-    "remote": "user@agitrepositoryhost.com:repositoryname.git",
-    "branch": "master",
-    "folder": "docroot",
-    "name": "Deploy Bot",
-    "email": "deploybot@aquifer.io",
-    "deploymentFiles": [
-      {
-        "src": "deploy/.gitignore",
-        "dest": ".gitignore"
-      },
-      {
-        "src": "deploy/.htaccess",
-        "dest": ".htaccess"
-      }
-    ],
-    "excludeLinks": ["sites/default/files"],
-    "addLinks": [
-      {
-        "src": "path/to/dir/in/project",
-        "dest": "path/to/dir/in/build",
-        "type": "dir"
-      }
-    ],
-    "delPatterns": ["*", "!.git"]
+    "config": {
+      "remote": "user@agitrepositoryhost.com:repositoryname.git",
+      "branch": "master",
+      "folder": "docroot",
+      "name": "Deploy Bot",
+      "email": "deploybot@aquifer.io",
+      "deploymentFiles": [
+        {
+          "src": "deploy/.gitignore",
+          "dest": ".gitignore"
+        },
+        {
+          "src": "deploy/.htaccess",
+          "dest": ".htaccess"
+        }
+      ],
+      "excludeLinks": ["sites/default/files"],
+      "addLinks": [
+        {
+          "src": "path/to/dir/in/project",
+          "dest": "path/to/dir/in/build",
+          "type": "dir"
+        }
+      ],
+      "delPatterns": ["*", "!.git"]
+    }
   }
 }
 ...
